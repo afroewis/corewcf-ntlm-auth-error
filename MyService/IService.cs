@@ -1,6 +1,7 @@
 ﻿using CoreWCF;
 using System;
 using System.Runtime.Serialization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MyService
 {
@@ -8,16 +9,22 @@ namespace MyService
     public interface IService
     {
         [OperationContract]
+        [Authorize(Policy = "Deny")]
         string GetData(int value);
 
         [OperationContract]
         CompositeType GetDataUsingDataContract(CompositeType composite);
     }
 
-    public class Service : IService
+    [ServiceBehavior(IncludeExceptionDetailInFaults = true)]
+    [Authorize(Policy = "Deny")]
+    public class Service(IHttpContextAccessor httpContextAccessor) : IService
     {
+        [Authorize(Policy = "Deny")]
         public string GetData(int value)
         {
+            // This should never be hit, because the policy should disallow any request.
+            var user = httpContextAccessor.HttpContext.User;
             return string.Format("You entered: {0}", value);
         }
 
